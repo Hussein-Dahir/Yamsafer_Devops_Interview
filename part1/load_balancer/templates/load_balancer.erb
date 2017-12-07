@@ -1,0 +1,21 @@
+<% region_name = "eu-central-1" %>
+<% credentials = Aws::Credentials.new("AKIAJQ6FNRMJW4BDFQ6Q", "n2BZYL9a4hBiMi+0B3spK0z0RHYXcqqfgYWpX6vs") %>
+<% ec2 = Aws::EC2::Resource.new(region: region_name, credentials: credentials) %>
+<% servers_ip_addresses = Array.new %>
+<% ec2.instances({filters: [{name: 'tag:Group', values: ['web-servers']}]}).each do |i| %>
+<% servers_ip_addresses.push i.public_ip_address %>
+<% end %>
+
+upstream backend {
+	<% servers_ip_addresses.each do |server_ip| %>
+	  server <%= server_ip %>; 
+	<% end %>
+}
+
+server {
+   listen 80; 
+
+   location / {
+      proxy_pass http://backend;
+   }
+}
